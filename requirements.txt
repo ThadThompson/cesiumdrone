@@ -1,0 +1,4 @@
+Flask==0.10.1
+requests==2.5.1
+wheel==0.24.0
+dronekit>=2.0.0,<=2.99999

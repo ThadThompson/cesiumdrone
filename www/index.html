@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
+  <title>AirMaster</title>
+  <script src="lib/Cesium/Cesium.js"></script>
+  <script src="lib/jquery.min.js"></script>
+  <style>
+      @import url(/lib/Cesium/Widgets/widgets.css);
+      html, body, #cesiumContainer {
+          width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
+      }
+
+      .toolbar-left {
+            display: block;
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            color: white;
+            text-shadow: 2px 2px #000000;
+      }
+
+  </style>
+</head>
+<body>
+    <div id="cesiumContainer"></div>
+
+    <div class="toolbar-left">
+        <button onclick="$.post('/api/arm')">Arm </button>
+        <button onclick="$.post('/api/takeoff' )">Takeoff</button>
+        <button onclick="$.post('/api/rtl')">RTL </button>
+        <input type="checkbox" id="moveTo">Move TO<br>
+
+        <pre id="diagnostic-display">
+        </pre>
+    </div>
+
+  <script>
+      var viewer = new Cesium.Viewer('cesiumContainer');
+      var scene = viewer.scene;
+
+      var position = Cesium.Cartesian3.fromDegrees(0, 0, 0);
+      var orientation = Cesium.Transforms.headingPitchRollQuaternion(position, 0, 0, 0);
+
+      // Create the Cesium UAS model
+      var entity = viewer.entities.add({
+
+        position : position,
+        orientation : orientation,
+
+        model : {
+            uri : 'assets/CesiumAir/Cesium_Air.gltf',
+            minimumPixelSize : 64
+        },
+
+        path : {
+            resolution : 1,
+            material : new Cesium.PolylineGlowMaterialProperty({
+                glowPower : 0.1,
+                color : Cesium.Color.YELLOW
+            }),
+            width : 10
+        }
+      });
+
+      var gotoPoint = viewer.entities.add({
+        point : {
+            pixelSize : 10,
+            color : Cesium.Color.YELLOW,
+            show: false
+        }
+      });
+
+      // Support click-to-move
+      handler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
+      handler.setInputAction(function(e) {
+
+            // Do nothing if not in navigate mode
+            if ( ! $("#moveTo").is(':checked')){
+                return;
+            }
+
+            var cartesian = viewer.camera.pickEllipsoid(e.position, scene.globe.ellipsoid);
+            if (cartesian) {
+                var cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+
+                gotoPoint.position = cartesian;
+                gotoPoint.point.show = true;
+
+                // Send the move command
+                $.post('/api/goto', {
+                        "Latitude": Cesium.Math.toDegrees(cartographic.latitude),
+                        "Longitude": Cesium.Math.toDegrees(cartographic.longitude),
+                        "Altitude": 20
+                });
+
+            } else {
+                gotoPoint.point.show = false;
+            }
+
+            // Unset the command state
+            $("#moveTo").prop('checked', false);
+
+      }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
+
+
+      // Pull data from the server
+      function request_server_data(uri, callback){
+          var request = $.ajax({
+              method: 'GET',
+              url: '/api/status',
+              cache: false,
+              contentType : 'application/json'
+          });
+
+          request.fail(function(jqXHR, textStatus) {
+              console.log(textStatus);
+              setTimeout(request_server_data, 2000, uri, callback);
+          });
+
+         request.done(function( data ) {
+
+             callback(data);
+             setTimeout(request_server_data, 100, uri, callback);
+         });
+    }
+
+    // Process new information from the UAS
+    function process_update(data){
+
+        $("#diagnostic-display").html(JSON.stringify(data, undefined, 2));
+
+        if (!data.Connected){
+            return;
+        }
+
+        var position = Cesium.Cartesian3.fromDegrees(data.Longitude, data.Latitude, data.Altitude);
+        var orientation = Cesium.Transforms.headingPitchRollQuaternion(position,
+                            data.Attitude.Yaw,
+                            data.Attitude.Pitch,
+                            data.Attitude.Roll);
+
+        entity.position = position;
+        entity.orientation = orientation;
+    }
+
+    request_server_data("api/status", process_update);
+
+  </script>
+</body>
+</html>

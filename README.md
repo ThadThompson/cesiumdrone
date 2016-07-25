@@ -4,7 +4,7 @@ A proof of concept web based GCS built on [DroneKit Python](https://github.com/d
 
 Inspired by [Tower Web](https://github.com/dronekit/tower-web)
 
-![Screenshot](screenshots/1.png)
+![Screenshot](screenshots/1.PNG)
 
 ## Running
 

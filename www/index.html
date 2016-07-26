@@ -138,7 +138,7 @@
 
         var position = Cesium.Cartesian3.fromDegrees(data.Longitude, data.Latitude, data.Altitude);
         var orientation = Cesium.Transforms.headingPitchRollQuaternion(position,
-                            data.Heading * (Math.PI / 180.0),
+                            data.Attitude.Yaw - 1.5708,
                             data.Attitude.Pitch,
                             data.Attitude.Roll);
 

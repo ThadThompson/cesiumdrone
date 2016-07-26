@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
-  <title>AirMaster</title>
+  <title>Cesium Drone</title>
   <script src="lib/Cesium/Cesium.js"></script>
   <script src="lib/jquery.min.js"></script>
   <style>
@@ -138,7 +138,7 @@
 
         var position = Cesium.Cartesian3.fromDegrees(data.Longitude, data.Latitude, data.Altitude);
         var orientation = Cesium.Transforms.headingPitchRollQuaternion(position,
-                            data.Attitude.Yaw,
+                            data.Heading * (Math.PI / 180.0),
                             data.Attitude.Pitch,
                             data.Attitude.Roll);
 

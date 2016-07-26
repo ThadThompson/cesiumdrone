@@ -16,7 +16,9 @@ log = logging.getLogger(__name__)
 # Configuration
 SERVER_PORT = 8080
 VEHICLE_CONNECTION_STRING = 'tcp:127.0.0.1:5760'
-WWW_DIR = os.path.join(os.path.dirname(os.getcwd()), "www")
+
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+WWW_DIR = os.path.join(BASE_DIR, "www")
 
 app = Flask(__name__)
 proxy = None
@@ -70,6 +72,7 @@ def _goto():
 
 #################################
 # Static files
+
 
 @app.route('/<path:path>')
 def _www(path):

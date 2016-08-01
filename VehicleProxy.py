@@ -27,7 +27,7 @@ class VehicleProxy(object):
                 log.debug(self._vehicle)
                 try:
                     log.debug("Connecting to vehicle at {}".format(self._connection_string))
-                    vehicle = connect(self._connection_string, wait_ready=True, rate=10)
+                    vehicle = connect(self._connection_string, wait_ready=True, rate=10, baud=57600)
 
                     # Testing
                     vehicle.parameters['ARMING_CHECK'] = 0

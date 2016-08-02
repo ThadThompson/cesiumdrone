@@ -14,11 +14,15 @@ class VehicleProxy(object):
         self._name = name
         self._connection_string = connection_string
         self._vehicle = None
+
         self._stop_thread = threading.Event()
 
         self._thread = threading.Thread(None, self._thread_loop, self._name + "_Thread", ())
         self._thread.Daemon = True
         self._thread.start()
+
+    def stop(self):
+        self._stop_thread.set()
 
     def _thread_loop(self):
 
@@ -38,7 +42,11 @@ class VehicleProxy(object):
                 except:
                     log.exception("Timed out connecting to vehicle")
 
-            time.sleep(2)
+            time.sleep(1)
+
+        if self._vehicle is not None:
+            self._vehicle.close()
+            self._vehicle = None
 
     def get_status(self):
         v = self._vehicle

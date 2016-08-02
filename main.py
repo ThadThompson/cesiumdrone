@@ -1,5 +1,6 @@
 import sys
 import os
+import signal
 import logging
 
 from flask import *
@@ -15,6 +16,7 @@ log = logging.getLogger(__name__)
 
 # Configuration
 SERVER_PORT = 8080
+#VEHICLE_CONNECTION_STRING = 'udpin:127.0.0.1:14550'
 VEHICLE_CONNECTION_STRING = 'tcp:127.0.0.1:5760'
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -84,7 +86,17 @@ def _index():
     return send_from_directory(WWW_DIR, 'index.html')
 
 
+def sigint_handler(signum, frame):
+    print "Processing SIGINT"
+    proxy.stop()
+    sys.exit()
+
+
 #################################
 if __name__ == "__main__":
+
+    # Install shutdown signal handler
+    signal.signal(signal.SIGINT, sigint_handler)
+
     proxy = VehicleProxy("UAS_1", VEHICLE_CONNECTION_STRING)
     app.run(host='0.0.0.0', port=SERVER_PORT, threaded=True)
